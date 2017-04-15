@@ -1,3 +1,43 @@
+##----------------------------------------------------------------------------##
+##               █      █                                                     ##
+##               ████████                                                     ##
+##             ██        ██                                                   ##
+##            ███  █  █  ███        license_header_checker.py                 ##
+##            █ █        █ █        License_Header_Checker                    ##
+##             ████████████                                                   ##
+##           █              █       Copyright (c) 2017                        ##
+##          █     █    █     █      AmazingCow - www.AmazingCow.com           ##
+##          █     █    █     █                                                ##
+##           █              █       N2OMatt - n2omatt@amazingcow.com          ##
+##             ████████████         www.amazingcow.com/n2omatt                ##
+##                                                                            ##
+##                  This software is licensed as GPLv3                        ##
+##                 CHECK THE COPYING FILE TO MORE DETAILS                     ##
+##                                                                            ##
+##    Permission is granted to anyone to use this software for any purpose,   ##
+##   including commercial applications, and to alter it and redistribute it   ##
+##               freely, subject to the following restrictions:               ##
+##                                                                            ##
+##     0. You **CANNOT** change the type of the license.                      ##
+##     1. The origin of this software must not be misrepresented;             ##
+##        you must not claim that you wrote the original software.            ##
+##     2. If you use this software in a product, an acknowledgment in the     ##
+##        product IS HIGHLY APPRECIATED, both in source and binary forms.     ##
+##        (See opensource.AmazingCow.com/acknowledgment.html for details).    ##
+##        If you will not acknowledge, just send us a email. We'll be         ##
+##        *VERY* happy to see our work being used by other people. :)         ##
+##        The email is: acknowledgment_opensource@AmazingCow.com              ##
+##     3. Altered source versions must be plainly marked as such,             ##
+##        and must not be misrepresented as being the original software.      ##
+##     4. This notice may not be removed or altered from any source           ##
+##        distribution.                                                       ##
+##     5. Most important, you must have fun. ;)                               ##
+##                                                                            ##
+##      Visit opensource.amazingcow.com for more open-source projects.        ##
+##                                                                            ##
+##                                  Enjoy :)                                  ##
+##----------------------------------------------------------------------------##
+
 ################################################################################
 ## Imports                                                                    ##
 ################################################################################
@@ -26,7 +66,17 @@ def read_text_from_file(filename):
     all_lines = f.readlines();
     text      = "".join(all_lines);
 
+    f.close();
+
     return text;
+
+
+def write_text_to_file(filename, text):
+    f = open(filename, mode="w", encoding="utf-8");
+
+    f.write(text);
+
+    f.close();
 
 
 ################################################################################
@@ -170,7 +220,8 @@ def update_license(
 
 
 def run():
-    file_path    = "/home/n2omatt/Documents/Projects/AmazingCow/AmazingCow-Game-Framework/bootstrap_game/scripts/clone_cocos2dx.sh";
+    # file_path    = "/home/n2omatt/Documents/Projects/AmazingCow/AmazingCow-Game-Framework/bootstrap_game/scripts/clone_cocos2dx.sh";
+    file_path = "license_header_checker.py"
     dir_path     = os.path.dirname  (file_path);
     file_name    = os.path.basename (file_path);
     project_name = get_git_repo_name(dir_path);
@@ -187,7 +238,17 @@ def run():
         curr_year,
         copyright_years,
         "#"
-    );
+    ) + "\n";
+
+    if(license_range[1] == -1):
+        license_range[1] = 0;
+
+    final_text =  text[:license_range[0]];
+    final_text += updated_text;
+    final_text += text[license_range[1]:];
+
+
+    write_text_to_file("license_header_checker.py", final_text);
 
 
     # print(text[license_range[0] : license_range[1]])
