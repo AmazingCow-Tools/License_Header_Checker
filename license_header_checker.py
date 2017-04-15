@@ -47,6 +47,7 @@ import os;
 import re;
 import subprocess
 import time;
+import sys;
 
 import pdb;
 
@@ -161,7 +162,7 @@ def find_license_range(text, comment_char):
         start_index = count_chars_up_to_line(start_line, lines);
         debug("Did not found a start license delimiter");
         debug("start_index is: ", start_index);
-        return [start_index, 0];
+        return [start_index, start_index];
 
     ## Calculate where the license ends.
     found_delimiter = False;
@@ -181,7 +182,7 @@ def find_license_range(text, comment_char):
         start_index = count_chars_up_to_line(start_line, lines);
         debug("Did not found a end license delimiter");
         debug("start_index is: ", start_index);
-        return [start_index, 0];
+        return [start_index, start_index];
 
     debug("License spans on lines: ", start_line, " to ", end_line);
 
@@ -238,37 +239,6 @@ def find_copyright_years(text, copyright_range):
     return years;
 
 
-def find_newlines_range(license_range, text):
-    lines = text.split("\n");
-
-    last_license_line = line_for_chars_count(
-        license_range[0] + license_range[1],
-        lines
-    );
-
-    blank_line_index = last_license_line;
-    ## Keep search for empty lines or the end of file.
-    while(blank_line_index < len(lines)-1):
-        blank_line_index += 1;
-
-        curr_line = lines[blank_line_index];
-        if(len(curr_line) != 0):
-            break;
-
-
-    #Calculate the newline ranges.
-    start_range    = license_range[1];
-    end_range      = count_chars_up_to_line(blank_line_index, lines);
-    newlines_range = [start_range, end_range];
-
-    # pdb.set_trace();
-
-    debug("Blank line ranges: ", newlines_range);
-    debug("Last new line    : ", blank_line_index);
-
-    return newlines_range;
-
-
 ################################################################################
 ##                                                                 ##
 ################################################################################
@@ -279,7 +249,7 @@ def update_license(
     copyright_years,
     comment_char):
 
-    template = read_text_from_file("license_template.text");
+    template = read_text_from_file("/usr/local/share/amazingcow_license_template.txt");
 
     ## Filename
     template = re.sub("FILENAME", file_name, template);
@@ -337,9 +307,9 @@ def run(file_path):
     license_range   = find_license_range  (text, comment_char   );
     copyright_range = find_copyright_range(text                 );
     copyright_years = find_copyright_years(text, copyright_range);
-    newlines_range  = find_newlines_range (license_range, text  );
 
-    updated_text = update_license(
+    old_license_text = text[license_range[0] : license_range[1]-1];
+    new_license_text = update_license(
         file_name,
         project_name,
         curr_year,
@@ -347,14 +317,22 @@ def run(file_path):
         comment_char
     );
 
+    if(old_license_text == new_license_text):
+        debug("License is the same - Skipping update.");
+        return;
+
+    debug("license_range   :", license_range  );
+    debug("copyright_range :", copyright_range);
+
     # pdb.set_trace();
     first_part      = text[:license_range[0]];
-    updated_license = updated_text + "\n\n";
-    last_part       = text[newlines_range[1]:];
+    updated_license = new_license_text + "\n\n";
+    last_part       = text[license_range[1]:].lstrip("\n");
     final_text      = first_part + updated_license + last_part;
-    write_text_to_file(file_path , final_text);
 
-run("license_header_checker.py");
+    write_text_to_file(file_path, final_text);
+
+run(sys.argv[1]);
 
 
 # class InsertDatetimeCommand(sublime_plugin.TextCommand):
