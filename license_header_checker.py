@@ -250,12 +250,6 @@ def run():
 
     write_text_to_file("license_header_checker.py", final_text);
 
-
-    # print(text[license_range[0] : license_range[1]])
-    # print(text[copyright_range[0] : copyright_range[1]])
-
-    # print(copyright_years);
-
 run();
 
 
