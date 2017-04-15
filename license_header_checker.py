@@ -96,7 +96,7 @@ def is_header_delimiter_line(line, comment_char):
 ################################################################################
 ##                                                                 ##
 ################################################################################
-def find_license_range(text):
+def find_license_range(text, comment_char):
     lines = text.split("\n");
 
     has_shebang = is_shebang_line(lines[0]);
@@ -112,14 +112,14 @@ def find_license_range(text):
     if(has_coding ): start_line = 2;
 
     ## Check if we have already a license
-    is_delimiter = is_header_delimiter_line(lines[start_line], "#"); ##COWTODO: Remove the hard cmt type
+    is_delimiter = is_header_delimiter_line(lines[start_line], comment_char);
     if(not is_delimiter):
         return [start_line, -1]; ## Has not License Header.
 
     ## Calculate where the license ends.
     end_line = (start_line + 1);
     while(True):
-        is_delimiter = is_header_delimiter_line(lines[end_line], "#"); ##COWTODO: Remove the hard cmt type
+        is_delimiter = is_header_delimiter_line(lines[end_line], comment_char);
         ## Found where the license ends.
         if(is_delimiter):
             break
@@ -226,10 +226,11 @@ def run():
     file_name    = os.path.basename (file_path);
     project_name = get_git_repo_name(dir_path);
     curr_year    = time.gmtime().tm_year;
+    comment_char = "#";
 
-    text            = read_text_from_file (file_path);
-    license_range   = find_license_range  (text);
-    copyright_range = find_copyright_range(text);
+    text            = read_text_from_file (file_path            );
+    license_range   = find_license_range  (text, comment_char   );
+    copyright_range = find_copyright_range(text                 );
     copyright_years = find_copyright_years(text, copyright_range);
 
     updated_text = update_license(
@@ -237,7 +238,7 @@ def run():
         project_name,
         curr_year,
         copyright_years,
-        "#"
+        comment_char
     ) + "\n";
 
     if(license_range[1] == -1):
