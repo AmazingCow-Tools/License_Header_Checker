@@ -1,3 +1,4 @@
+#!/usr/bin/python
 ##----------------------------------------------------------------------------##
 ##               █      █                                                     ##
 ##               ████████                                                     ##
@@ -47,6 +48,18 @@ import re;
 import subprocess
 import time;
 
+import pdb;
+
+
+################################################################################
+## Debug                                                                      ##
+################################################################################
+def debug(*args):
+    print("".join(map(str, args)));
+
+def print_range(range, text):
+    print(repr(text[range[0]:range[1]]));
+    # print(text[range[0]:range[1]]);
 
 ################################################################################
 ##                                                                 ##
@@ -60,6 +73,7 @@ def get_git_repo_name(dir_path):
 
     return process.stdout.read().decode("UTF-8").replace("\n", "");
 
+
 def read_text_from_file(filename):
     f = open(filename, encoding='utf-8');
 
@@ -72,6 +86,7 @@ def read_text_from_file(filename):
 
 
 def write_text_to_file(filename, text):
+    # debug(text);
     f = open(filename, mode="w", encoding="utf-8");
 
     f.write(text);
@@ -83,15 +98,34 @@ def write_text_to_file(filename, text):
 ##                                                                 ##
 ################################################################################
 def is_shebang_line(line):
+    ## COWTODO(n2omatt): Use regex to check .
     return "#!" in line;
 
 def is_coding_line(line):
+    ## COWTODO(n2omatt): Use regex to check .
     return "# coding" in line;
 
 def is_header_delimiter_line(line, comment_char):
+    ## COWTODO(n2omatt): Use regex to check .
     target_line = (comment_char * 2) + ("-" * 76) + (comment_char * 2);
     return target_line == line;
 
+def count_chars_up_to_line(line_index, lines):
+    chars_count = 0;
+    for i in range(0, line_index):
+        chars_count += (len(lines[i]) + 1); ## +1 for newlines
+    return chars_count;
+
+def line_for_chars_count(chars_count, lines):
+    count = 0;
+    for line_index in range(0, len(lines)):
+        curr_line = lines[line_index];
+        count    += (len(curr_line) + 1); ##+1 is for new line.
+
+        if(count == chars_count):
+            return line_index;
+
+    return -1;
 
 ################################################################################
 ##                                                                 ##
@@ -105,66 +139,134 @@ def find_license_range(text, comment_char):
     if(has_shebang):
         has_coding = is_coding_line(lines[1]);
 
+    debug("Has shebang: ", has_shebang);
+    debug("Has coding : ", has_coding );
 
     ## Caclulate the where the actual license starts (or should start).
     start_line = 0;
     if(has_shebang): start_line = 1;
     if(has_coding ): start_line = 2;
 
+    debug("Starting seaching license on line: ", start_line);
+
     ## Check if we have already a license
-    is_delimiter = is_header_delimiter_line(lines[start_line], comment_char);
-    if(not is_delimiter):
-        return [start_line, -1]; ## Has not License Header.
+    ## COWTODO(n2omatt): Is possible to have the license bellow...
+    ## We must take care of this...
+    found_delimiter = False;
+    is_delimiter    = is_header_delimiter_line(lines[start_line], comment_char);
+    if(is_delimiter):
+        found_delimiter = True;
+
+    if(not found_delimiter):
+        start_index = count_chars_up_to_line(start_line, lines);
+        debug("Did not found a start license delimiter");
+        debug("start_index is: ", start_index);
+        return [start_index, 0];
 
     ## Calculate where the license ends.
-    end_line = (start_line + 1);
+    found_delimiter = False;
+    end_line        = (start_line + 1);
     while(True):
         is_delimiter = is_header_delimiter_line(lines[end_line], comment_char);
         ## Found where the license ends.
         if(is_delimiter):
-            break
+            found_delimiter = True;
+            break;
 
         end_line += 1;
+        if(end_line >= len(lines)):
+            break;
+
+    if(not found_delimiter):
+        start_index = count_chars_up_to_line(start_line, lines);
+        debug("Did not found a end license delimiter");
+        debug("start_index is: ", start_index);
+        return [start_index, 0];
+
+    debug("License spans on lines: ", start_line, " to ", end_line);
 
     ## Calculate the License range.
-    start_range = 0;
-    for i in range(0, start_line):
-        start_range += (len(lines[i]) + 1); ## +1 for newlines
+    start_range   = count_chars_up_to_line(start_line,  lines);
+    end_range     = count_chars_up_to_line(end_line +1, lines);
+    license_range = [start_range, end_range];
 
-    end_range = start_range;
-    for i in range(start_line , end_line + 1):
-        end_range += (len(lines[i]) + 1); ## +1 for newlines
+    debug("License range is: ", license_range);
+    # debug("License text is:");
+    # print_range(license_range, text);
 
-
-    return [start_range, end_range -1]; ## -1 is to remove the last newline
+    return license_range;
 
 
 def find_copyright_range(text):
     lines = text.split("\n");
 
     ## Find the copyright line.
-    copyright_index = -1;
+    copyright_line = -1;
     for i in range(0, len(lines)):
         line = lines[i];
         m = re.search("Copyright \(c\) [0-9]{4}", line);
         if(m is not None):
-            copyright_index = i;
+            copyright_line = i;
             break;
 
-    ## Calculate the range.
-    start_range = 0;
-    for i in range(0, copyright_index):
-        start_range += (len(lines[i]) + 1); ## +1 for newlines
+    debug("Copyright line is: ", copyright_line);
 
-    end_range = start_range + len(lines[copyright_index]);
+    ## Not found...
+    if(copyright_line == -1):
+        debug("Did not found Copyright info");
+        return [-1, -1];
 
-    return [start_range, end_range];
+    ## Found...
+    start_range     = count_chars_up_to_line(copyright_line,    lines);
+    end_range       = count_chars_up_to_line(copyright_line +1, lines);
+    copyright_range = [start_range, end_range];
+
+    debug("Copyright range is: ", copyright_range);
+    # debug("Copyright text is:");
+    # print_range(copyright_range, text);
+
+    return copyright_range
 
 
 def find_copyright_years(text, copyright_range):
     copyright_text = text[copyright_range[0] : copyright_range[1]];
     m = re.findall("[0-9]{4}", copyright_text);
-    return list(map(int, m));
+
+    years = list(map(int, m));
+    debug("Copyright years : ", years);
+
+    return years;
+
+
+def find_newlines_range(license_range, text):
+    lines = text.split("\n");
+
+    last_license_line = line_for_chars_count(
+        license_range[0] + license_range[1],
+        lines
+    );
+
+    blank_line_index = last_license_line;
+    ## Keep search for empty lines or the end of file.
+    while(blank_line_index < len(lines)-1):
+        blank_line_index += 1;
+
+        curr_line = lines[blank_line_index];
+        if(len(curr_line) != 0):
+            break;
+
+
+    #Calculate the newline ranges.
+    start_range    = license_range[1];
+    end_range      = count_chars_up_to_line(blank_line_index, lines);
+    newlines_range = [start_range, end_range];
+
+    # pdb.set_trace();
+
+    debug("Blank line ranges: ", newlines_range);
+    debug("Last new line    : ", blank_line_index);
+
+    return newlines_range;
 
 
 ################################################################################
@@ -180,7 +282,7 @@ def update_license(
     template = read_text_from_file("license_template.text");
 
     ## Filename
-    template = re.sub("FILENAME", file_name,    template);
+    template = re.sub("FILENAME", file_name, template);
 
     ## Project
     template = re.sub("PROJECT",  project_name, template);
@@ -202,6 +304,9 @@ def update_license(
 
     template = re.sub("YEARS",  final_copyright, template);
 
+    debug("Final copyright years: ", final_copyright);
+
+
     ## Comment chars
     template = re.sub("!!",  comment_char * 2, template);
 
@@ -216,12 +321,12 @@ def update_license(
         lines[i] += (" " * spaces_to_add) + (comment_char * 2);
 
     template = "\n".join(lines);
+    template = template[:-1]; ## Remove the tralling \n
+
     return template;
 
 
-def run():
-    # file_path    = "/home/n2omatt/Documents/Projects/AmazingCow/AmazingCow-Game-Framework/bootstrap_game/scripts/clone_cocos2dx.sh";
-    file_path = "license_header_checker.py"
+def run(file_path):
     dir_path     = os.path.dirname  (file_path);
     file_name    = os.path.basename (file_path);
     project_name = get_git_repo_name(dir_path);
@@ -232,6 +337,7 @@ def run():
     license_range   = find_license_range  (text, comment_char   );
     copyright_range = find_copyright_range(text                 );
     copyright_years = find_copyright_years(text, copyright_range);
+    newlines_range  = find_newlines_range (license_range, text  );
 
     updated_text = update_license(
         file_name,
@@ -239,19 +345,16 @@ def run():
         curr_year,
         copyright_years,
         comment_char
-    ) + "\n";
+    );
 
-    if(license_range[1] == -1):
-        license_range[1] = 0;
+    # pdb.set_trace();
+    first_part      = text[:license_range[0]];
+    updated_license = updated_text + "\n\n";
+    last_part       = text[newlines_range[1]:];
+    final_text      = first_part + updated_license + last_part;
+    write_text_to_file(file_path , final_text);
 
-    final_text =  text[:license_range[0]];
-    final_text += updated_text;
-    final_text += text[license_range[1]:];
-
-
-    write_text_to_file("license_header_checker.py", final_text);
-
-run();
+run("license_header_checker.py");
 
 
 # class InsertDatetimeCommand(sublime_plugin.TextCommand):
