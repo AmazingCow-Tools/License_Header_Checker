@@ -103,8 +103,8 @@ def is_shebang_line(line):
     return "#!" in line;
 
 def is_coding_line(line):
-    ## COWTODO(n2omatt): Use regex to check .
-    return "# coding" in line;
+    m = re.search("#\ *coding.*", line)
+    return m is not None;
 
 def is_header_delimiter_line(line, comment_char):
     ## COWTODO(n2omatt): Use regex to check .
