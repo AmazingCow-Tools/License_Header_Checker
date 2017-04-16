@@ -62,6 +62,7 @@ def print_range(range, text):
     print(repr(text[range[0]:range[1]]));
     # print(text[range[0]:range[1]]);
 
+
 ################################################################################
 ##                                                                 ##
 ################################################################################
@@ -127,6 +128,25 @@ def line_for_chars_count(chars_count, lines):
             return line_index;
 
     return -1;
+
+
+def get_comment_char_for_file(filename):
+    ext = os.path.splitext(filename)[1];
+    if(ext is None or len(ext) == 0):
+        return "#"; ## COWTODO(n2omatt): Use file(1) to guess the type.
+
+    if(ext in ".h"  ): return "/";
+    if(ext in ".cpp"): return "/";
+
+    if(ext in ".cs" ): return "/";
+
+    if(ext in ".py"): return "#";
+    if(ext in ".sh"): return "#";
+
+    if(ext in ".js" ): return "/";
+    if(ext in ".jsx"): return "/";
+
+
 
 ################################################################################
 ##                                                                 ##
@@ -301,7 +321,7 @@ def run(file_path):
     file_name    = os.path.basename (file_path);
     project_name = get_git_repo_name(dir_path);
     curr_year    = time.gmtime().tm_year;
-    comment_char = "#";
+    comment_char = get_comment_char_for_file(file_path);
 
     text            = read_text_from_file (file_path            );
     license_range   = find_license_range  (text, comment_char   );
