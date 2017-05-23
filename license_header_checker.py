@@ -48,7 +48,6 @@ import re;
 import subprocess
 import time;
 import sys;
-
 import pdb;
 
 
@@ -68,9 +67,10 @@ def print_range(range, text):
 ################################################################################
 def get_git_repo_name(dir_path):
     process = subprocess.Popen(
-        ["git-repo-name", dir_path],
+        ["basename $(git config --get remote.origin.url) .git", dir_path],
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
+        stderr=subprocess.STDOUT,
+        shell=True
     );
 
     return process.stdout.read().decode("UTF-8").replace("\n", "");
