@@ -42,24 +42,53 @@
 ################################################################################
 ## Imports                                                                    ##
 ################################################################################
+import getopt;
 import os.path;
 import os;
+import pdb;
 import re;
 import subprocess
-import time;
 import sys;
-import pdb;
+import time;
+
+
+################################################################################
+## Global vars                                                                ##
+################################################################################
+g_is_to_check = False;
+g_verbose_log = False;
+g_years       = set();
+
+
+################################################################################
+## Show Help / Version / Error                                                ##
+################################################################################
+def show_help(exit_code):
+    print("I have no help for now.... sorry :x");
+    exit(exit_code);
+
+def show_version():
+    print("Amazing Cow - License Header Checker v0.1.0");
+    exit(0);
+
+def show_error(*args):
+    print("[FATAL] {0}".format(
+        "".join(args)
+    ));
+    exit(1);
 
 
 ################################################################################
 ## Debug                                                                      ##
 ################################################################################
 def debug(*args):
-    print("".join(map(str, args)));
+    if(g_verbose_log):
+        print("".join(map(str, args)));
 
 def print_range(range, text):
-    print(repr(text[range[0]:range[1]]));
-    # print(text[range[0]:range[1]]);
+    if(g_verbose_log):
+        print(repr(text[range[0]:range[1]]));
+        # print(text[range[0]:range[1]]);
 
 
 ################################################################################
@@ -280,9 +309,13 @@ def update_license(
     ## Copyright years.
     ## Add the current year and make sure that the years
     ## are unique by turning the list into set.
-    copyright_years.append(curr_year)
+    for year in g_years:
+        copyright_years.append(int(year));
+
+    copyright_years.append(curr_year);
     copyright_years = list(set(copyright_years));
     copyright_years.sort();
+
 
     final_copyright = "";
     if(len(copyright_years) > 2):
@@ -337,7 +370,17 @@ def run(file_path):
         comment_char
     );
 
-    if(old_license_text == new_license_text):
+    same_license = (old_license_text == new_license_text);
+    if(g_is_to_check):
+        if(same_license):
+            debug("Has License Header.");
+            exit(0); ## Success...
+
+        else:
+            debug("Has not License Header.");
+            exit(1); ## Fail...
+
+    if(same_license):
         debug("License is the same - Skipping update.");
         return;
 
@@ -352,8 +395,66 @@ def run(file_path):
 
     write_text_to_file(file_path, final_text);
 
-run(sys.argv[1]);
 
+
+################################################################################
+## Entry Point                                                                ##
+################################################################################
+def main():
+    global g_is_to_check;
+    global g_verbose_log;
+    global g_years;
+
+    ## Init the getopt.
+    try:
+        opts, args = getopt.gnu_getopt(
+            sys.argv[1:],
+            "",
+            ["help", "version", "check", "verbose", "year="]
+        );
+    except Exception as e:
+        raise
+
+    ## No given filenames to check.
+    if(len(args) == 0):
+        show_error("Missing filename.");
+
+    ## Default options.
+    g_is_to_check = False;
+    g_verbose_log = False;
+    g_years       = set();
+
+    ## Parse the given command line options.
+    for option, argument in opts:
+        ## Help / Version
+        if "help" in option:
+            show_help(0);
+        elif "version" in option:
+            show_version();
+
+        ## Check
+        elif "check" in option:
+            g_is_to_check = True;
+
+        ## Verbose
+        elif "verbose" in option:
+            g_verbose_log = True;
+
+        ## Years
+        elif "year" in option:
+            g_years.add(int(argument));
+
+    ## Run.
+    try:
+        run(args[0]);
+    except Exception as e:
+        print(e);
+        exit(1);
+
+# run(sys.argv[1]);
+
+if __name__ == '__main__':
+    main();
 
 # class InsertDatetimeCommand(sublime_plugin.TextCommand):
     # def run(self, edit):
