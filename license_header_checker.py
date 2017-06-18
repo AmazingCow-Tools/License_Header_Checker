@@ -95,6 +95,9 @@ def print_range(range, text):
 ##                                                                 ##
 ################################################################################
 def get_git_repo_name(dir_path):
+    cwd = os.getcwd();
+    os.chdir(dir_path);
+
     process = subprocess.Popen(
         ["basename $(git config --get remote.origin.url) .git", dir_path],
         stdout=subprocess.PIPE,
@@ -102,7 +105,9 @@ def get_git_repo_name(dir_path):
         shell=True
     );
 
-    return process.stdout.read().decode("UTF-8").replace("\n", "");
+    name = process.stdout.read().decode("UTF-8").replace("\n", "");
+    os.chdir(cwd);
+    return name;
 
 
 def read_text_from_file(filename):
