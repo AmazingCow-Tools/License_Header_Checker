@@ -1,0 +1,5 @@
+################################################################################
+## Version 0.1.0 - Jun 18, 2017                                               ##
+################################################################################
+[FEATURE] Make the lhc get the correct git repo name even whitin submodules.
+[OTHER] All other changes that I didn't recorded...
