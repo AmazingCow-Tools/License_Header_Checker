@@ -55,9 +55,10 @@ import time;
 ################################################################################
 ## Global vars                                                                ##
 ################################################################################
-g_is_to_check = False;
-g_verbose_log = False;
-g_years       = set();
+g_is_to_check     = False;
+g_verbose_log     = False;
+g_years           = set();
+g_n2omatt_license = False;
 
 
 ################################################################################
@@ -82,12 +83,12 @@ def show_error(*args):
 ## Debug                                                                      ##
 ################################################################################
 def debug(*args):
-    if(g_verbose_log):
-        print("".join(map(str, args)));
+    # if(g_verbose_log):
+    print("".join(map(str, args)));
 
 def print_range(range, text):
-    if(g_verbose_log):
-        print(repr(text[range[0]:range[1]]));
+    # if(g_verbose_log):
+    print(repr(text[range[0]:range[1]]));
         # print(text[range[0]:range[1]]);
 
 
@@ -124,10 +125,9 @@ def read_text_from_file(filename):
 def write_text_to_file(filename, text):
     # debug(text);
     f = open(filename, mode="w", encoding="utf-8");
-
     f.write(text);
-
     f.close();
+
 
 
 ################################################################################
@@ -251,6 +251,48 @@ def find_license_range(text, comment_char):
 
     return license_range;
 
+def find_date_range(text):
+    lines = text.split("\n");
+
+    ## Find the date line.
+    date_line = -1;
+    for i in range(0, len(lines)):
+        line = lines[i];
+        m = re.search("Date      : ", line);
+        if(m is not None):
+            date_line = i;
+            break;
+
+    debug("Date line is: ", date_line);
+    if(date_line == -1):
+        debug("Did not found Date info");
+        return [-1, -1];
+
+    ## Found...
+    start_range = count_chars_up_to_line(date_line,    lines);
+    end_range   = count_chars_up_to_line(date_line +1, lines);
+    date_range  = [start_range, end_range];
+
+    debug("Date range is: ", date_range);
+    return date_range;
+
+
+def find_date_info(text, date_range):
+    if(date_range == [-1, -1]):
+        return time.strftime("%B %d, %Y");
+
+    ## First take the substring the represents the date line from text.
+    date_info = text[date_range[0] : date_range[1]];
+
+    ## Now due the format that we're using, skip the !! Date      : substr
+    ## and only gets enough to be a complete date but without the last chars
+    ## delimiters.
+    ## COWNOTE: This is nasty... but is working for now.
+    date_info = date_info[15: 65];
+
+    debug("Date info is: ", date_info);
+    return date_info.strip(" ");
+
 
 def find_copyright_range(text):
     lines = text.split("\n");
@@ -301,15 +343,22 @@ def update_license(
     project_name,
     curr_year,
     copyright_years,
+    date_info,
     comment_char):
 
-    template = read_text_from_file("/usr/local/share/amazingcow_license_template.txt");
+    license_file = "n2omatt_license_template.txt" if g_n2omatt_license else "amazingcow_license_template.txt";
+    template     = read_text_from_file(
+        os.path.join("/usr/local/share", license_file)
+    );
 
     ## Filename
     template = re.sub("FILENAME", file_name, template);
 
     ## Project
     template = re.sub("PROJECT",  project_name, template);
+
+    ## Date
+    template = re.sub("DATE", date_info, template);
 
     ## Copyright years.
     ## Add the current year and make sure that the years
@@ -363,6 +412,8 @@ def run(file_path):
 
     text            = read_text_from_file (file_path            );
     license_range   = find_license_range  (text, comment_char   );
+    date_range      = find_date_range     (text                 );
+    date_info       = find_date_info      (text, date_range     );
     copyright_range = find_copyright_range(text                 );
     copyright_years = find_copyright_years(text, copyright_range);
 
@@ -372,6 +423,7 @@ def run(file_path):
         project_name,
         curr_year,
         copyright_years,
+        date_info,
         comment_char
     );
 
@@ -409,13 +461,14 @@ def main():
     global g_is_to_check;
     global g_verbose_log;
     global g_years;
+    global g_n2omatt_license;
 
     ## Init the getopt.
     try:
         opts, args = getopt.gnu_getopt(
             sys.argv[1:],
             "",
-            ["help", "version", "check", "verbose", "year="]
+            ["help", "version", "check", "verbose", "year=", "n2omatt"]
         );
     except Exception as e:
         raise
@@ -425,9 +478,10 @@ def main():
         show_error("Missing filename.");
 
     ## Default options.
-    g_is_to_check = False;
-    g_verbose_log = False;
-    g_years       = set();
+    g_is_to_check     = False;
+    g_verbose_log     = False;
+    g_years           = set();
+    g_n2omatt_license = False;
 
     ## Parse the given command line options.
     for option, argument in opts:
@@ -449,6 +503,10 @@ def main():
         elif "year" in option:
             g_years.add(int(argument));
 
+        ## N2OMatt license
+        elif "n2omatt" in option:
+            g_n2omatt_license = True;
+
     ## Run.
     try:
         run(args[0]);
@@ -456,27 +514,5 @@ def main():
         print(e);
         exit(1);
 
-# run(sys.argv[1]);
-
 if __name__ == '__main__':
     main();
-
-# class InsertDatetimeCommand(sublime_plugin.TextCommand):
-    # def run(self, edit):
-        # full_file_name = self.view.file_name();
-        # file_name      = os.path.basename (full_file_name);
-        # dir_name       = os.path.dirname  (full_file_name);
-
-        # curr_year      = time.gmtime().tm_year;
-
-
-        # print(full_file_name);
-        # print(file_name);
-        # print(curr_year);
-        # print(project_name);
-
-        # ## Amazing Cow License
-        # license_region = sublime.Region(0, 81 * 39);
-        # license_substr = self.view.substr(license_region);
-
-
