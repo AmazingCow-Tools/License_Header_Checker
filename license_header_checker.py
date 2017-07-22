@@ -251,6 +251,7 @@ def find_license_range(text, comment_char):
 
     return license_range;
 
+
 def find_date_range(text):
     lines = text.split("\n");
 
@@ -275,7 +276,6 @@ def find_date_range(text):
 
     debug("Date range is: ", date_range);
     return date_range;
-
 
 def find_date_info(text, date_range):
     if(date_range == [-1, -1]):
@@ -323,7 +323,6 @@ def find_copyright_range(text):
     # print_range(copyright_range, text);
 
     return copyright_range
-
 
 def find_copyright_years(text, copyright_range):
     copyright_text = text[copyright_range[0] : copyright_range[1]];
@@ -402,6 +401,16 @@ def update_license(
 
     return template;
 
+def find_description_range(text, license_range):
+    if(not g_n2omatt_license):
+        return None;
+
+    start_index = text.find("Description");
+    return [
+        license_range[0] + start_index, 
+        license_range[1]
+    ];
+
 
 def run(file_path):
     dir_path     = os.path.dirname  (file_path);
@@ -410,12 +419,12 @@ def run(file_path):
     curr_year    = time.gmtime().tm_year;
     comment_char = get_comment_char_for_file(file_path);
 
-    text            = read_text_from_file (file_path            );
-    license_range   = find_license_range  (text, comment_char   );
-    date_range      = find_date_range     (text                 );
-    date_info       = find_date_info      (text, date_range     );
-    copyright_range = find_copyright_range(text                 );
-    copyright_years = find_copyright_years(text, copyright_range);
+    text              = read_text_from_file  (file_path            );
+    license_range     = find_license_range   (text, comment_char   );
+    date_range        = find_date_range      (text                 );
+    date_info         = find_date_info       (text, date_range     );
+    copyright_range   = find_copyright_range (text                 );
+    copyright_years   = find_copyright_years (text, copyright_range);
 
     old_license_text = text[license_range[0] : license_range[1]-1];
     new_license_text = update_license(
@@ -426,6 +435,15 @@ def run(file_path):
         date_info,
         comment_char
     );
+
+    ori_desc_range = find_description_range(old_license_text, license_range);
+    new_desc_range = find_description_range(new_license_text, license_range);
+
+    ori_desc_text = old_license_text[ori_desc_range[0]:ori_desc_range[1]];
+    new_desc_text = new_license_text[new_desc_range[0]:new_desc_range[1]];
+
+    if(ori_desc_text != new_desc_text):
+        new_license_text = new_license_text[:ori_desc_range[0]] + ori_desc_text;
 
     same_license = (old_license_text == new_license_text);
     if(g_is_to_check):
@@ -473,10 +491,6 @@ def main():
     except Exception as e:
         raise
 
-    ## No given filenames to check.
-    if(len(args) == 0):
-        show_error("Missing filename.");
-
     ## Default options.
     g_is_to_check     = False;
     g_verbose_log     = False;
@@ -507,8 +521,12 @@ def main():
         elif "n2omatt" in option:
             g_n2omatt_license = True;
 
+    ## No given filenames to check.
+    if(len(args) == 0):
+        show_error("Missing filename.");
+
     ## Run.
-    try:
+    try:        
         run(args[0]);
     except Exception as e:
         print(e);
