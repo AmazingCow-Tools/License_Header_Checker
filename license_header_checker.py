@@ -407,7 +407,7 @@ def find_description_range(text, license_range):
 
     start_index = text.find("Description");
     return [
-        license_range[0] + start_index, 
+        license_range[0] + start_index,
         license_range[1]
     ];
 
@@ -439,11 +439,13 @@ def run(file_path):
     ori_desc_range = find_description_range(old_license_text, license_range);
     new_desc_range = find_description_range(new_license_text, license_range);
 
-    ori_desc_text = old_license_text[ori_desc_range[0]:ori_desc_range[1]];
-    new_desc_text = new_license_text[new_desc_range[0]:new_desc_range[1]];
+    if(ori_desc_range is not None and new_desc_range is not None):
+        ori_desc_text = old_license_text[ori_desc_range[0]:ori_desc_range[1]];
+        new_desc_text = new_license_text[new_desc_range[0]:new_desc_range[1]];
 
-    if(ori_desc_text != new_desc_text):
-        new_license_text = new_license_text[:ori_desc_range[0]] + ori_desc_text;
+        if(ori_desc_text != new_desc_text):
+            new_license_text = new_license_text[:ori_desc_range[0]] + ori_desc_text;
+
 
     same_license = (old_license_text == new_license_text);
     if(g_is_to_check):
@@ -526,11 +528,12 @@ def main():
         show_error("Missing filename.");
 
     ## Run.
-    try:        
+    try:
         run(args[0]);
     except Exception as e:
-        print(e);
-        exit(1);
+        raise
+        # print(e);
+        # exit(1);
 
 if __name__ == '__main__':
     main();
