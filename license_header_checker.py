@@ -59,7 +59,7 @@ g_is_to_check     = False;
 g_verbose_log     = False;
 g_years           = set();
 g_n2omatt_license = False;
-
+g_project_name    = None;
 
 ################################################################################
 ## Show Help / Version / Error                                                ##
@@ -69,7 +69,7 @@ def show_help(exit_code):
     exit(exit_code);
 
 def show_version():
-    print("Amazing Cow - License Header Checker v0.1.0");
+    print("Amazing Cow - License Header Checker v0.1.1");
     exit(0);
 
 def show_error(*args):
@@ -96,6 +96,9 @@ def print_range(range, text):
 ##                                                                 ##
 ################################################################################
 def get_git_repo_name(dir_path):
+    if(g_project_name is not None and len(g_project_name) != 0):
+        return g_project_name;
+
     cwd = os.getcwd();
     os.chdir(dir_path);
 
@@ -482,13 +485,19 @@ def main():
     global g_verbose_log;
     global g_years;
     global g_n2omatt_license;
+    global g_project_name;
 
     ## Init the getopt.
     try:
         opts, args = getopt.gnu_getopt(
             sys.argv[1:],
             "",
-            ["help", "version", "check", "verbose", "year=", "n2omatt"]
+            [
+                "help", "version",
+                "check", "verbose",
+                "year=", "n2omatt",
+                "project-name="
+            ]
         );
     except Exception as e:
         raise
@@ -498,6 +507,7 @@ def main():
     g_verbose_log     = False;
     g_years           = set();
     g_n2omatt_license = False;
+    g_project_name    = None;
 
     ## Parse the given command line options.
     for option, argument in opts:
@@ -522,6 +532,10 @@ def main():
         ## N2OMatt license
         elif "n2omatt" in option:
             g_n2omatt_license = True;
+
+        ## Project name.
+        elif "project-name" in option:
+            g_project_name = argument;
 
     ## No given filenames to check.
     if(len(args) == 0):
