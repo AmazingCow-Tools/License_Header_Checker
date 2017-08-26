@@ -51,7 +51,8 @@ mkdir -pv $SHARE_DIR;
 mkdir -pv $BIN_DIR;
 
 ## Just copy the files to destination folders.
-cp ./license_header_checker.py $BIN_DIR/lhc
-cp ./license_template.text     $SHARE_DIR/amazingcow_license_template.txt
+cp ./license_header_checker.py        $BIN_DIR/lhc
+cp ./amazingcow_license_template.text $SHARE_DIR/amazingcow_license_template.txt
+cp ./n2omatt_license_template.text    $SHARE_DIR/n2omatt_license_template.txt
 
 echo "Done...";

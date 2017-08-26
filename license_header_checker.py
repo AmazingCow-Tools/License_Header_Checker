@@ -55,10 +55,11 @@ import time;
 ################################################################################
 ## Global vars                                                                ##
 ################################################################################
-g_is_to_check = False;
-g_verbose_log = False;
-g_years       = set();
-
+g_is_to_check     = False;
+g_verbose_log     = False;
+g_years           = set();
+g_n2omatt_license = False;
+g_project_name    = None;
 
 ################################################################################
 ## Show Help / Version / Error                                                ##
@@ -68,7 +69,7 @@ def show_help(exit_code):
     exit(exit_code);
 
 def show_version():
-    print("Amazing Cow - License Header Checker v0.1.0");
+    print("Amazing Cow - License Header Checker v0.1.1");
     exit(0);
 
 def show_error(*args):
@@ -82,12 +83,12 @@ def show_error(*args):
 ## Debug                                                                      ##
 ################################################################################
 def debug(*args):
-    if(g_verbose_log):
-        print("".join(map(str, args)));
+    # if(g_verbose_log):
+    print("".join(map(str, args)));
 
 def print_range(range, text):
-    if(g_verbose_log):
-        print(repr(text[range[0]:range[1]]));
+    # if(g_verbose_log):
+    print(repr(text[range[0]:range[1]]));
         # print(text[range[0]:range[1]]);
 
 
@@ -95,6 +96,9 @@ def print_range(range, text):
 ##                                                                 ##
 ################################################################################
 def get_git_repo_name(dir_path):
+    if(g_project_name is not None and len(g_project_name) != 0):
+        return g_project_name;
+
     cwd = os.getcwd();
     os.chdir(dir_path);
 
@@ -124,10 +128,9 @@ def read_text_from_file(filename):
 def write_text_to_file(filename, text):
     # debug(text);
     f = open(filename, mode="w", encoding="utf-8");
-
     f.write(text);
-
     f.close();
+
 
 
 ################################################################################
@@ -252,6 +255,48 @@ def find_license_range(text, comment_char):
     return license_range;
 
 
+def find_date_range(text):
+    lines = text.split("\n");
+
+    ## Find the date line.
+    date_line = -1;
+    for i in range(0, len(lines)):
+        line = lines[i];
+        m = re.search("Date      : ", line);
+        if(m is not None):
+            date_line = i;
+            break;
+
+    debug("Date line is: ", date_line);
+    if(date_line == -1):
+        debug("Did not found Date info");
+        return [-1, -1];
+
+    ## Found...
+    start_range = count_chars_up_to_line(date_line,    lines);
+    end_range   = count_chars_up_to_line(date_line +1, lines);
+    date_range  = [start_range, end_range];
+
+    debug("Date range is: ", date_range);
+    return date_range;
+
+def find_date_info(text, date_range):
+    if(date_range == [-1, -1]):
+        return time.strftime("%B %d, %Y");
+
+    ## First take the substring the represents the date line from text.
+    date_info = text[date_range[0] : date_range[1]];
+
+    ## Now due the format that we're using, skip the !! Date      : substr
+    ## and only gets enough to be a complete date but without the last chars
+    ## delimiters.
+    ## COWNOTE: This is nasty... but is working for now.
+    date_info = date_info[15: 65];
+
+    debug("Date info is: ", date_info);
+    return date_info.strip(" ");
+
+
 def find_copyright_range(text):
     lines = text.split("\n");
 
@@ -282,7 +327,6 @@ def find_copyright_range(text):
 
     return copyright_range
 
-
 def find_copyright_years(text, copyright_range):
     copyright_text = text[copyright_range[0] : copyright_range[1]];
     m = re.findall("[0-9]{4}", copyright_text);
@@ -301,15 +345,22 @@ def update_license(
     project_name,
     curr_year,
     copyright_years,
+    date_info,
     comment_char):
 
-    template = read_text_from_file("/usr/local/share/amazingcow_license_template.txt");
+    license_file = "n2omatt_license_template.txt" if g_n2omatt_license else "amazingcow_license_template.txt";
+    template     = read_text_from_file(
+        os.path.join("/usr/local/share", license_file)
+    );
 
     ## Filename
     template = re.sub("FILENAME", file_name, template);
 
     ## Project
     template = re.sub("PROJECT",  project_name, template);
+
+    ## Date
+    template = re.sub("DATE", date_info, template);
 
     ## Copyright years.
     ## Add the current year and make sure that the years
@@ -353,6 +404,16 @@ def update_license(
 
     return template;
 
+def find_description_range(text, license_range):
+    if(not g_n2omatt_license):
+        return None;
+
+    start_index = text.find("Description");
+    return [
+        license_range[0] + start_index,
+        license_range[1]
+    ];
+
 
 def run(file_path):
     dir_path     = os.path.dirname  (file_path);
@@ -361,10 +422,12 @@ def run(file_path):
     curr_year    = time.gmtime().tm_year;
     comment_char = get_comment_char_for_file(file_path);
 
-    text            = read_text_from_file (file_path            );
-    license_range   = find_license_range  (text, comment_char   );
-    copyright_range = find_copyright_range(text                 );
-    copyright_years = find_copyright_years(text, copyright_range);
+    text              = read_text_from_file  (file_path            );
+    license_range     = find_license_range   (text, comment_char   );
+    date_range        = find_date_range      (text                 );
+    date_info         = find_date_info       (text, date_range     );
+    copyright_range   = find_copyright_range (text                 );
+    copyright_years   = find_copyright_years (text, copyright_range);
 
     old_license_text = text[license_range[0] : license_range[1]-1];
     new_license_text = update_license(
@@ -372,8 +435,20 @@ def run(file_path):
         project_name,
         curr_year,
         copyright_years,
+        date_info,
         comment_char
     );
+
+    ori_desc_range = find_description_range(old_license_text, license_range);
+    new_desc_range = find_description_range(new_license_text, license_range);
+
+    if(ori_desc_range is not None and new_desc_range is not None):
+        ori_desc_text = old_license_text[ori_desc_range[0]:ori_desc_range[1]];
+        new_desc_text = new_license_text[new_desc_range[0]:new_desc_range[1]];
+
+        if(ori_desc_text != new_desc_text):
+            new_license_text = new_license_text[:ori_desc_range[0]] + ori_desc_text;
+
 
     same_license = (old_license_text == new_license_text);
     if(g_is_to_check):
@@ -409,25 +484,30 @@ def main():
     global g_is_to_check;
     global g_verbose_log;
     global g_years;
+    global g_n2omatt_license;
+    global g_project_name;
 
     ## Init the getopt.
     try:
         opts, args = getopt.gnu_getopt(
             sys.argv[1:],
             "",
-            ["help", "version", "check", "verbose", "year="]
+            [
+                "help", "version",
+                "check", "verbose",
+                "year=", "n2omatt",
+                "project-name="
+            ]
         );
     except Exception as e:
         raise
 
-    ## No given filenames to check.
-    if(len(args) == 0):
-        show_error("Missing filename.");
-
     ## Default options.
-    g_is_to_check = False;
-    g_verbose_log = False;
-    g_years       = set();
+    g_is_to_check     = False;
+    g_verbose_log     = False;
+    g_years           = set();
+    g_n2omatt_license = False;
+    g_project_name    = None;
 
     ## Parse the given command line options.
     for option, argument in opts:
@@ -449,34 +529,25 @@ def main():
         elif "year" in option:
             g_years.add(int(argument));
 
+        ## N2OMatt license
+        elif "n2omatt" in option:
+            g_n2omatt_license = True;
+
+        ## Project name.
+        elif "project-name" in option:
+            g_project_name = argument;
+
+    ## No given filenames to check.
+    if(len(args) == 0):
+        show_error("Missing filename.");
+
     ## Run.
     try:
         run(args[0]);
     except Exception as e:
-        print(e);
-        exit(1);
-
-# run(sys.argv[1]);
+        raise
+        # print(e);
+        # exit(1);
 
 if __name__ == '__main__':
     main();
-
-# class InsertDatetimeCommand(sublime_plugin.TextCommand):
-    # def run(self, edit):
-        # full_file_name = self.view.file_name();
-        # file_name      = os.path.basename (full_file_name);
-        # dir_name       = os.path.dirname  (full_file_name);
-
-        # curr_year      = time.gmtime().tm_year;
-
-
-        # print(full_file_name);
-        # print(file_name);
-        # print(curr_year);
-        # print(project_name);
-
-        # ## Amazing Cow License
-        # license_region = sublime.Region(0, 81 * 39);
-        # license_substr = self.view.substr(license_region);
-
-
