@@ -60,6 +60,8 @@ g_verbose_log     = False;
 g_years           = set();
 g_n2omatt_license = False;
 g_project_name    = None;
+g_comment_char    = None;
+
 
 ################################################################################
 ## Show Help / Version / Error                                                ##
@@ -69,7 +71,7 @@ def show_help(exit_code):
     exit(exit_code);
 
 def show_version():
-    print("Amazing Cow - License Header Checker v0.1.1");
+    print("Amazing Cow - License Header Checker v0.1.2");
     exit(0);
 
 def show_error(*args):
@@ -168,6 +170,10 @@ def line_for_chars_count(chars_count, lines):
 
 
 def get_comment_char_for_file(filename):
+    ## User ask to override the default char...
+    if(g_comment_char is not None):
+        return g_comment_char;
+
     ext = os.path.splitext(filename)[1];
     if(ext is None or len(ext) == 0):
         return "#"; ## COWTODO(n2omatt): Use file(1) to guess the type.
@@ -486,6 +492,7 @@ def main():
     global g_years;
     global g_n2omatt_license;
     global g_project_name;
+    global g_comment_char;
 
     ## Init the getopt.
     try:
@@ -496,7 +503,8 @@ def main():
                 "help", "version",
                 "check", "verbose",
                 "year=", "n2omatt",
-                "project-name="
+                "project-name=",
+                "cmt-char=",
             ]
         );
     except Exception as e:
@@ -508,6 +516,7 @@ def main():
     g_years           = set();
     g_n2omatt_license = False;
     g_project_name    = None;
+    g_comment_char    = None;
 
     ## Parse the given command line options.
     for option, argument in opts:
@@ -536,6 +545,10 @@ def main():
         ## Project name.
         elif "project-name" in option:
             g_project_name = argument;
+
+        ## Comment char.
+        elif "cmt-char" in option:
+            g_comment_char = argument;
 
     ## No given filenames to check.
     if(len(args) == 0):
