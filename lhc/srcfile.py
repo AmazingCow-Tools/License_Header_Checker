@@ -400,7 +400,13 @@ def _parse_license():
         if(len(extracted_info) == 0):
             continue;
 
-        info[extracted_info[0]] = extracted_info[1];
+        key    = extracted_info[0];
+        values = extracted_info[1];
+
+        while(len(values) > 0 and len(values[ 0]) == 0): values.pop(0);
+        while(len(values) > 0 and len(values[-1]) == 0): values.pop();
+
+        info[key] = values;
 
 def _clean_up_header_lines():
     global _header_lines;
