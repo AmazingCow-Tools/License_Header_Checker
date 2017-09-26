@@ -1,3 +1,20 @@
+##~---------------------------------------------------------------------------##
+##                     _______  _______  _______  _     _                     ##
+##                    |   _   ||       ||       || | _ | |                    ##
+##                    |  |_|  ||       ||   _   || || || |                    ##
+##                    |       ||       ||  | |  ||       |                    ##
+##                    |       ||      _||  |_|  ||       |                    ##
+##                    |   _   ||     |_ |       ||   _   |                    ##
+##                    |__| |__||_______||_______||__| |__|                    ##
+##                             www.amazingcow.com                             ##
+##  File      : srcfile.py                                                    ##
+##  Project   : License_Header_Checker                                        ##
+##  Date      : Sep 25, 2017                                                  ##
+##  License   : GPLv3                                                         ##
+##  Author    : n2omatt <n2omatt@amazingcow.com>                              ##
+##  Copyright : Amazing Cow - 2017                                            ##
+##  Description :                                                             ##
+##---------------------------------------------------------------------------~##
 
 ################################################################################
 ## Imports                                                                    ##
@@ -23,6 +40,7 @@ filename      = None;
 extension     = None;
 comment_start = None;
 comment_end   = None;
+
 
 ################################################################################
 ## Private Vars                                                               ##
@@ -161,7 +179,7 @@ def _merge_info(info_dict):
 
 def _fill_missing_info():
     if(info["file"] is None):
-        info["file"] = [filename];
+        info["file"] = [os.path.basename(filename)];
 
     if(info["project"] is None):
         info["project"] = [_get_project()];
