@@ -28,7 +28,7 @@ echo "Installing...";
 ################################################################################
 ## lhc                                                                        ##
 ################################################################################
-sudo python setup.py install;
+sudo python setup.py install --force;
 
 
 ################################################################################
@@ -39,6 +39,7 @@ sudo python setup.py install;
 sudo mkdir -pv $SHARE_DIR;
 
 ## Just copy the files to destination folders.
+sudo rm -rf $SHARE_DIR/lhc_templates;
 sudo cp -r templates $SHARE_DIR/lhc_templates;
 
 
