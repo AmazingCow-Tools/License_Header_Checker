@@ -221,15 +221,18 @@ def _build_info_line(key, values):
     big_spc = " " * 6;
     pad     = " " * (max(map(len, relevant_keys)) - len(key)) + " ";
 
-    key = key.capitalize();
+    is_description = (key == "description");
+    key            = key.capitalize();
 
-    if(len(values) == 1):
+    if(len(values) == 1 and not is_description):
         return ["{SPC}{0}{PAD}: {1}".format(key, values[0], SPC=spc, PAD=pad)];
 
     lines = ["{SPC}{0}{PAD}:".format(key, SPC=spc, PAD=pad)];
     for value in values:
         lines.append("{BIGSPC}{0}".format(value, BIGSPC=big_spc));
 
+    if(is_description):
+        lines.insert(0, " ");
     return lines;
 
 def _build_header_delimiter(start):
