@@ -233,6 +233,7 @@ def _build_info_line(key, values):
 
     if(is_description):
         lines.insert(0, " ");
+
     return lines;
 
 def _build_header_delimiter(start):
@@ -263,7 +264,8 @@ def fill(line, fill_char=" "):
         _comment_real_start,
         line,
         _comment_real_end,
-        SPC=spc);
+        SPC=spc
+    );
     return line;
 
 
@@ -435,7 +437,7 @@ def _extract_info(curr_line, remaining_lines):
     key, value = curr_line.split(":");
 
     ## Clean up..
-    key  = key.lower().strip(" ");
+    key   = key.lower().strip(" ");
     value = value.strip(" ");
 
     ## Key not recognized.
