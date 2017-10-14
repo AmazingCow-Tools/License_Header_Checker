@@ -194,10 +194,14 @@ def _fill_missing_info():
         info["date"] = [_get_date()];
 
 def _get_date():
+    date = None;
     if(gitrepo.is_valid()):
-        return gitrepo.get_date_for_file(filename);
+        date = gitrepo.get_date_for_file(filename);
 
-    return time.strftime("%b %d, %Y");
+    if(date is None):
+        date = time.strftime("%b %d, %Y");
+
+    return date;
 
 def _get_copyright():
     return "{0} - 2017".format(info["company"][0]);
