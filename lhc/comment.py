@@ -19,6 +19,9 @@
 ################################################################################
 ## Imports                                                                    ##
 ################################################################################
+## Python
+import pdb;
+## Amazing Cow
 import constants;
 
 
@@ -26,12 +29,18 @@ import constants;
 ## Comment Functions                                                          ##
 ################################################################################
 def get_for_ext(ext):
+    if(ext.startswith(".")):
+        ext = ext[1:];
+
     return [
         get_start_for_ext(ext),
         get_end_for_ext  (ext)
     ];
 
 def get_real_for_ext(ext):
+    if(ext.startswith(".")):
+        ext = ext[1:];
+
     return [
         get_real_str(get_start_for_ext(ext)),
         get_real_str(get_end_for_ext  (ext))

@@ -24,6 +24,7 @@ import os;
 import os.path;
 import copy;
 import time;
+import re;
 import pdb;
 ## AmazingCow - Libs
 import constants
@@ -311,14 +312,27 @@ def _check_shebang():
         _shebang_line = _src_lines[0];
 
 def _check_coding():
+    global _shebang_line;
     global _coding_line;
+    global _src_lines;
 
     ## Empty file...
     if(len(_src_lines) == 0):
         return;
 
-    ## COWTODO(n2omatt): Implement...
-    _coding_line = None;
+    pattern = re.compile("coding[=:]\s*([-\w.]+)");
+    index   = 0;
+
+    if(_shebang_line is not None):
+        index = 1;
+
+    ## There's no enough lines...
+    if(len(_src_lines) < index + 1):
+        return;
+
+    if(pattern.search(_src_lines[index].replace("\n", "")) is not None):
+        _coding_line = _src_lines[index];
+
 
 def _find_header_lines_span():
     global _license_line_start;
@@ -340,6 +354,11 @@ def _find_header_lines_span():
             log.error("Missing License Header markers.");
 
 def _get_cleaned_source_lines():
+    global _license_line_start;
+    global _license_line_end;
+    global _shebang_line;
+    global _coding_line;
+
     index_start = _license_line_start;
     index_end   = _license_line_end;
 
@@ -364,7 +383,7 @@ def _get_cleaned_source_lines():
             break;
 
     lines = _src_lines[index_end:];
-    if(lines[0] != "\n"):
+    if(len(lines) > 0 and lines[0] != "\n"):
         lines.insert(0, "\n");
 
     return lines;
