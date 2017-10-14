@@ -24,6 +24,7 @@ import os;
 import os.path;
 import copy;
 import time;
+import pdb;
 ## AmazingCow - Libs
 import constants
 import comment;
@@ -132,7 +133,7 @@ def build():
     output_lines += _build_header_delimiter(start=True);
 
     ## Banner
-    output_lines += map(fill_center, _banner_lines);
+    output_lines += _build_banner_lines();
 
     ## Info
     ordered_keys = copy.deepcopy(constants.kInfoKeys);
