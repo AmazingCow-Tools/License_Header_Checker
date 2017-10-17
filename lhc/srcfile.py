@@ -250,6 +250,18 @@ def _build_header_delimiter(start):
     line = line.replace("\n", "")[::-1];
     return line + "\n";
 
+def _build_banner_lines():
+    global _banner_lines;
+
+    max_len = max(map(len, _banner_lines));
+    lines = [];
+    for line in _banner_lines[:-1]:
+        lines.append(line + (" " * (max_len - len(line))));
+
+    lines.append(_banner_lines[-1]);
+    return "".join(map(fill_center, lines));
+
+
 def fill_center(line):
     global _comment_real_start;
     global _comment_real_end;
