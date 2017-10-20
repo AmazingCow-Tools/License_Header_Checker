@@ -32,10 +32,11 @@ import log;
 ################################################################################
 info     = dict.fromkeys(constants.kInfoKeys);
 
-no_rc    = False;
-verbose  = False;
-dry_run  = False;
-filename = None;
+no_rc     = False;
+verbose   = False;
+dry_run   = False;
+filename  = None;
+no_banner = False;
 
 
 ################################################################################
@@ -47,6 +48,7 @@ def parse_info():
     global verbose;
     global dry_run;
     global filename;
+    global no_banner;
 
     try:
         cmd_options = getopt.gnu_getopt(
@@ -57,7 +59,7 @@ def parse_info():
                 "help", "version",
 
                 ## Run Control
-                "no-rc", "verbose", "dry-run",
+                "no-rc", "verbose", "dry-run", "no-banner",
 
                 ## Info Flags
                 "project=",
@@ -76,9 +78,10 @@ def parse_info():
             elif("version" in flag): log.version();
 
             ## Run Control
-            elif("no-rc"   in flag): no_rc    = True;
-            elif("verbose" in flag): verbose  = True;
-            elif("dry-run" in flag): dry_run  = True;
+            elif("no-rc"     in flag): no_rc     = True; continue;
+            elif("verbose"   in flag): verbose   = True; continue;
+            elif("dry-run"   in flag): dry_run   = True; continue;
+            elif("no-banner" in flag): no_banner = True; continue;
 
             ## Info Flags
             flag = flag.replace("=", "").replace("--", "");

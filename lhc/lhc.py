@@ -34,16 +34,22 @@ def main():
     rcfile.read_info  ();
     cmdline.parse_info();
 
+    print cmdline.info;
+
     srcfile.read_info(cmdline.filename);
 
     srcfile.merge_rc_info          (rcfile.info);
     srcfile.merge_command_line_info(cmdline.info);
 
-    srcfile.set_banner();
+    if(cmdline.no_banner == False):
+        srcfile.set_banner();
 
     lines = srcfile.build();
 
-    open(cmdline.filename, "w").writelines(lines);
+    if(not cmdline.dry_run):
+        open(cmdline.filename, "w").writelines(lines);
+    else:
+        print "".join(lines);
 
 if __name__ == "__main__":
     main()
