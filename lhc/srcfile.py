@@ -141,7 +141,8 @@ def build():
     ordered_keys.remove("company");
 
     for key in ordered_keys:
-        print info[key]
+        print(info[key]);
+
         values = info[key];
         lines  = map(fill, _build_info_line(key, values));
         output_lines += lines;
