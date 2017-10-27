@@ -190,24 +190,92 @@ def _fill_missing_info():
     if(info["license"] is None):
         info["license"] = [constants.kLicense_Default];
 
-    if(info["copyright"] is None or len(info["copyright"]) == 0):
-        info["copyright"] = [_get_copyright()];
+    ## Copyright is always overriden...
+    info["copyright"] = _get_copyright();
 
     if(info["date"] is None or len(info["date"]) == 0):
         info["date"] = [_get_date()];
 
 def _get_date():
+    global info;
+
     date = None;
+    ## Try get from git first, since it's the most accurate source.
     if(gitrepo.is_valid()):
         date = gitrepo.get_date_for_file(filename);
 
+    ## Check if there's any date on the file info itself.
+    if(date is None and info["date"] and len(info["date"]) != 0):
+        date = info["date"][0];
+
+    ## Get the current date!
     if(date is None):
         date = time.strftime("%b %d, %Y");
 
     return date;
 
 def _get_copyright():
-    return "{0} - 2017".format(info["company"][0]);
+    global info;
+    copyright_info = copy.deepcopy(info["copyright"]);
+
+    ## Date is Mon DD, YYYY.
+    ##   And we need only the year.
+    file_year = _get_date().split(",")[1].strip();
+    curr_year = time.strftime("%Y");
+
+    ## Missing copyright info...
+    if(copyright_info is None or len(copyright_info) == 0):
+        return [
+            "{0} - {1}".format(
+                info["company"][0],
+                _get_copyright_format_years(file_year, curr_year)
+            )
+        ];
+
+    ## Already has copyright info...
+    ## COWNOTE(n2omatt): We're assuming here that all the copyright
+    ## information is in the format of: CopyrightOwner - Years
+    ## So all the parsing bellow only works for this case!
+    ## COWTODO(n2omatt): Think a better way to implement that...
+    copyright_owners = {};
+    for item in copyright_info:
+        comps = item.split("-");
+        owner = comps[0];
+        years = ", ".join(comps[1:]);
+
+        if(owner not in copyright_owners.keys()):
+            copyright_owners[owner] = "";
+
+        copyright_owners[owner] += years + ", ";
+
+    result = [];
+    for owner in sorted(copyright_owners.keys()):
+        val = copyright_owners[owner];
+        val = filter(str.isdigit, map(str.strip, val.split(",")));
+        val = val;
+
+        result.append(
+            "{0} - {1}".format(
+                owner.strip(),
+                _get_copyright_format_years(*val)
+            )
+        );
+
+    return result;
+
+def _get_copyright_format_years(*years):
+    years = set(map(int, years));
+
+    min_year = min(years);
+    max_year = max(years);
+
+    if(len(years) == 1):
+        return max_year;
+
+    if(len(years) == 2 and (max_year - min_year == 1)):
+        return "{0}, {1}".format(min_year, max_year);
+
+    return "{0} - {1}".format(min_year, max_year)
 
 def _get_project():
     if(gitrepo.is_valid()):
