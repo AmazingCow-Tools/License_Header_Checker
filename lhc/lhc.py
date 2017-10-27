@@ -34,7 +34,7 @@ def main():
     rcfile.read_info  ();
     cmdline.parse_info();
 
-    print cmdline.info;
+    print(cmdline.info);
 
     srcfile.read_info(cmdline.filename);
 
@@ -49,7 +49,7 @@ def main():
     if(not cmdline.dry_run):
         open(cmdline.filename, "w").writelines(lines);
     else:
-        print "".join(lines);
+        print("".join(lines));
 
 if __name__ == "__main__":
     main()
