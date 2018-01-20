@@ -20,6 +20,9 @@
 ################################################################################
 ## Imports                                                                    ##
 ################################################################################
+## Python
+import os;
+import os.path;
 ## Amazinzg Cow - Libs
 import constants;
 import rcfile;
@@ -31,11 +34,13 @@ import cmdline;
 ## Public Functions                                                           ##
 ################################################################################
 def main():
-    rcfile.read_info  ();
     cmdline.parse_info();
-
     print(cmdline.info);
 
+    dir_name = os.path.dirname(cmdline.filename);
+    os.chdir(dir_name);
+
+    rcfile.read_info();
     srcfile.read_info(cmdline.filename);
 
     srcfile.merge_rc_info          (rcfile.info);
@@ -53,5 +58,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
