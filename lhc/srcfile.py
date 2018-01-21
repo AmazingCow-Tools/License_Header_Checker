@@ -571,7 +571,3 @@ def _extract_info(curr_line, remaining_lines):
         values.append(next_line);
 
     return [len(remaining_lines), [key, values]];
-
-
-
-
