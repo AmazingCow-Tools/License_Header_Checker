@@ -30,7 +30,7 @@ kComment_Slash = [
     ## C#
     "cs",
     # Javascript
-    "js", "jsx",
+    "js", "jsx", "ts",
     ## Action Script
     "as3",
     ## PHP
@@ -47,7 +47,8 @@ kComment_Hash = [
 ];
 
 kComment_Other = {
-    "html" : ["<!-- ", "-", " -->"]
+    "html" : ["<!-- ", "-", " -->"],
+    "md"   : ["<!-- ", "-", " -->"]
 };
 
 
